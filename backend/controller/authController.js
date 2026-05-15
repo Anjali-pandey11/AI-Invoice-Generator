@@ -1,8 +1,5 @@
-// controllers/authController.js
-
 import User from "../model/User.js";
 import bcrypt from "bcryptjs";
-import nodemailer from "nodemailer";
 import { ENV } from "../config/ENV.js";
 import { sendEmail } from "../utils/nodemailer.js";
 import { generateToken } from "../utils/jwt.js";
@@ -10,7 +7,6 @@ import { generateToken } from "../utils/jwt.js";
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    console.log(email);
 
     // check empty fields
     if (!name || !email || !password) {
@@ -45,7 +41,7 @@ export const registerUser = async (req, res) => {
       verifyOtpExpireAt: Date.now() + 10 * 60 * 1000,
     });
 
-    await sendEmail(email, "Verify Your Account", `Your OTP is ${otp}`);
+    await sendEmail(user.email, "Verify Your Account", `Your OTP is ${otp}`);
 
     res.status(201).json({
       success: true,
@@ -72,19 +68,19 @@ export const verifyEmail = async (req, res) => {
       });
     }
 
-    // check otp
-    if (user.verifyOtp !== otp) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP",
-      });
-    }
-
     // check expiry
     if (user.verifyOtpExpireAt < Date.now()) {
       return res.status(400).json({
         success: false,
         message: "OTP Expired",
+      });
+    }
+
+    // check otp
+    if (user.verifyOtp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid OTP",
       });
     }
 
@@ -95,9 +91,12 @@ export const verifyEmail = async (req, res) => {
 
     await user.save();
 
+    const token = generateToken(user._id);
+
     res.status(200).json({
       success: true,
       message: "Email verified successfully",
+      token,
     });
   } catch (error) {
     res.status(500).json({
@@ -109,32 +108,32 @@ export const verifyEmail = async (req, res) => {
 
 export const LoginUser = async (req, res) => {
   try {
-    // 1. Get email and password from frontend
+    //  Get email and password from frontend
     const { email, password } = req.body;
 
-    // 2. Find user in database
+    // Find user in database
     const user = await User.findOne({ email });
 
-    // 3. Check user exists or not
+    //  Check user exists or not
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid Email",
+        message: "Invalid credentials",
       });
     }
 
-    // 4. Compare password
+    //  Compare password
     const isMatch = await bcrypt.compare(password, user.password);
 
-    // 6. Wrong password
+    //  Wrong password
     if (!isMatch) {
       return res.status(400).json({
         success: false,
-        message: "Invalid Password",
+        message: "Invalid credentials",
       });
     }
 
-    // 5. Check email verified or not
+    //  Check email verified or not
     if (!user.isVerified) {
       // generate otp
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -146,6 +145,7 @@ export const LoginUser = async (req, res) => {
       await user.save();
 
       // send email
+
       await sendEmail(user.email, "Verify Your Account", `Your OTP is ${otp}`);
 
       return res.status(403).json({
@@ -154,19 +154,16 @@ export const LoginUser = async (req, res) => {
       });
     }
 
-    // 7. Generate JWT token
+    //  Generate JWT token
     const token = generateToken(user._id);
 
-    // 8. Send response
+    //Send response
     res.status(200).json({
       success: true,
       message: "Login Successful",
       token,
-      user,
     });
   } catch (error) {
-    console.log(error);
-
     res.status(500).json({
       success: false,
       message: "Server Error",
