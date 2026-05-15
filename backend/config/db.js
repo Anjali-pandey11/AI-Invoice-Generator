@@ -1,7 +1,7 @@
 
 
 import mongoose from "mongoose";
-import { ENV } from "../ENV.js";
+import { ENV } from "../config/ENV.js";
 
 const url = ENV.mongodb_uri;
 
