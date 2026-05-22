@@ -6,6 +6,8 @@ import Register from './pages/Register'
 import VerifyEmail from './pages/VerifyEmail'
 import ForgetPassword from './pages/ForgetPassword'
 import HomePage from './pages/HomePage'
+import ProtectedRoute from './utils/ProtectedRoute'
+import "./index.css";
 
 const App = () => {
   return (
@@ -15,7 +17,14 @@ const App = () => {
       <Route path="/login" element={<Login/>} />
       <Route path="/verify-email" element={<VerifyEmail/>} />
       <Route path="/forgot-password" element={<ForgetPassword/>} />
-      <Route path="/dashboard" element={<Dashboard/>} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
       
     </Routes>

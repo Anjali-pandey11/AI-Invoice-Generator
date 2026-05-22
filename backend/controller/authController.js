@@ -97,6 +97,7 @@ export const verifyEmail = async (req, res) => {
       success: true,
       message: "Email verified successfully",
       token,
+      user:user.name,
     });
   } catch (error) {
     res.status(500).json({
@@ -162,6 +163,7 @@ export const LoginUser = async (req, res) => {
       success: true,
       message: "Login Successful",
       token,
+      user:user.name
     });
   } catch (error) {
     res.status(500).json({
